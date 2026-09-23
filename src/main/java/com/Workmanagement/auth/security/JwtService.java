@@ -27,15 +27,31 @@ public class JwtService {
     }
 
     public String extractEmail(String token) {
-        return Jwts.parser()
-                .verifyWith(secretKey)
-                .build()
-                .parseSignedClaims(token)
-                .getPayload()
-                .getSubject();
+
+        if (token == null || token.isBlank()) {
+            return null;
+        }
+
+        try {
+            return Jwts.parser()
+                    .verifyWith(secretKey)
+                    .build()
+                    .parseClaimsJws(token)
+                    .getPayload()
+                    .getSubject();
+        } catch (Exception e) {
+            return null;
+        }
     }
 
+
+
     public boolean isTokenValid(String token) {
+
+        if (token == null || token.isBlank()) {
+            return false;
+        }
+
         try {
             Jwts.parser()
                     .verifyWith(secretKey)

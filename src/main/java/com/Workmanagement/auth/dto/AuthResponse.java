@@ -12,10 +12,10 @@ import lombok.Setter;
 public class AuthResponse {
 
     private String message;
-    private String token;
 
 
-    public AuthResponse(String message) {
-        this.message = message;
-    }
+    // constructor
+//    public AuthResponse(String message) {
+//        this.message = message;
+//    }
 }

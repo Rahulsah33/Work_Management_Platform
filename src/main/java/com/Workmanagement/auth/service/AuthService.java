@@ -1,13 +1,10 @@
 package com.Workmanagement.auth.service;
 
 import com.Workmanagement.auth.dto.AuthResponse;
-import com.Workmanagement.auth.dto.LoginRequest;
 import com.Workmanagement.auth.dto.RegisterRequest;
 import com.Workmanagement.auth.security.JwtService;
 import com.Workmanagement.user.entity.User;
 import com.Workmanagement.user.repository.UserRepository;
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -27,6 +24,7 @@ public class AuthService {
 
     }
 
+    // Register
     public AuthResponse register(RegisterRequest request){
         if (userRepository.existsByEmail(request.getEmail())){
             throw new RuntimeException("Email already Registered");
@@ -47,18 +45,15 @@ public class AuthService {
         return new AuthResponse("User registered successfully");
     }
 
-    public AuthResponse login(String email, String password){
+    // Login:-
+    public String login(String email, String password){
 
         User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("Invalid email or password"));
 
         if (!passwordEncoder.matches(password, user.getPassword())){
             throw new RuntimeException("Invalid email or password");
         }
-
-        String token = jwtService.generateToken(user.getEmail());
-        return new AuthResponse("Login Successful..." , token);
-
+        return jwtService.generateToken(user.getEmail());
     }
-
 
 }
