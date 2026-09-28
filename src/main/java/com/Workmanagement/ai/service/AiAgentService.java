@@ -4,6 +4,7 @@ import com.Workmanagement.ai.tools.ProjectTools;
 import com.Workmanagement.ai.tools.SubmissionTools;
 import com.Workmanagement.ai.tools.TaskTools;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.google.genai.GoogleGenAiChatOptions;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.method.MethodToolCallbackProvider;
 import org.springframework.stereotype.Service;
@@ -32,6 +33,10 @@ public class AiAgentService {
                         .getToolCallbacks();
 
         this.chatClient = chatClientBuilder
+                .defaultOptions(
+                        GoogleGenAiChatOptions.builder()
+                                .responseMimeType("text/plain")
+                )
                 .defaultSystem("""
                     You are an AI work management assistant.
 

@@ -1,10 +1,12 @@
 package com.Workmanagement.ai.tools;
 
+import com.Workmanagement.ai.model.TaskToolResult;
 import com.Workmanagement.task.entity.Task;
 import com.Workmanagement.task.entity.TaskStatus;
 import com.Workmanagement.task.repository.TaskRepository;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -18,24 +20,31 @@ public class TaskTools {
         this.taskRepository = taskRepository;
     }
 
-    @Tool(description = "Get a task by its ID")
-    public Task getTask(Long taskId) {
+    @Tool(description = "Get a task by its ID. Use this for a specific task lookup.")
+    @Transactional(readOnly = true)
+    public TaskToolResult getTask(Long taskId) {
 
         return taskRepository.findById(taskId)
+                .map(TaskToolResult::from)
                 .orElseThrow(() ->
                         new RuntimeException(
                                 "Task not found: " + taskId
                         ));
     }
 
-    @Tool(description = "Get all tasks assigned to an employee")
-    public List<Task> getEmployeeTasks(Long employeeId) {
+    @Tool(description = "Get all tasks assigned to an employee by employee ID")
+    @Transactional(readOnly = true)
+    public List<TaskToolResult> getEmployeeTasks(Long employeeId) {
 
-        return taskRepository.findByAssignedToId(employeeId);
+        return taskRepository.findByAssignedToId(employeeId)
+                .stream()
+                .map(TaskToolResult::from)
+                .toList();
     }
 
     @Tool(description = "Get all overdue tasks that are not completed")
-    public List<Task> getOverdueTasks() {
+    @Transactional(readOnly = true)
+    public List<TaskToolResult> getOverdueTasks() {
 
         LocalDate today = LocalDate.now();
 
@@ -46,12 +55,17 @@ public class TaskTools {
                                 && task.getEndDate().isBefore(today)
                                 && task.getStatus() != TaskStatus.COMPLETED
                 )
+                .map(TaskToolResult::from)
                 .toList();
     }
 
-    @Tool(description = "Get all tasks belonging to a project")
-    public List<Task> getProjectTasks(Long projectId) {
+    @Tool(description = "Get all tasks belonging to a project by project ID")
+    @Transactional(readOnly = true)
+    public List<TaskToolResult> getProjectTasks(Long projectId) {
 
-        return taskRepository.findByProjectId(projectId);
+        return taskRepository.findByProjectId(projectId)
+                .stream()
+                .map(TaskToolResult::from)
+                .toList();
     }
 }
