@@ -4,6 +4,7 @@ import com.Workmanagement.submission.entity.Submission;
 import com.Workmanagement.submission.entity.SubmissionStatus;
 import com.Workmanagement.submission.repository.SubmissionRepository;
 import com.Workmanagement.task.entity.Task;
+import com.Workmanagement.task.entity.TaskStatus;
 import com.Workmanagement.task.repository.TaskRepository;
 import com.Workmanagement.user.entity.User;
 import com.Workmanagement.user.repository.UserRepository;
@@ -105,5 +106,79 @@ public class SubmissionService {
         submission.setStatus(status);
 
         return submissionRepository.save(submission);
+    }
+
+    // Approve submission
+    public Submission approveSubmission(Long submissionId) {
+
+        Submission submission = submissionRepository.findById(submissionId)
+                .orElseThrow(() ->
+                        new RuntimeException("Submission not found: " + submissionId));
+
+        if (submission.getStatus() != SubmissionStatus.UNDER_REVIEW) {
+            throw new RuntimeException(
+                    "Only submissions under review can be approved"
+            );
+        }
+
+        submission.setStatus(SubmissionStatus.APPROVED);
+
+        // Task is now completed
+        Task task = submission.getTask();
+        task.setStatus(TaskStatus.COMPLETED);
+
+        return submissionRepository.save(submission);
+    }
+
+    // Request changes for submission
+    public Submission requestChanges(Long submissionId) {
+
+        Submission submission = submissionRepository.findById(submissionId)
+                .orElseThrow(() ->
+                        new RuntimeException("Submission not found: " + submissionId));
+
+        if (submission.getStatus() != SubmissionStatus.UNDER_REVIEW) {
+            throw new RuntimeException(
+                    "Changes can only be requested for submissions under review"
+            );
+        }
+
+        submission.setStatus(SubmissionStatus.CHANGES_REQUESTED);
+
+        // Employee can work on the task again
+        Task task = submission.getTask();
+        task.setStatus(TaskStatus.IN_PROGRESS);
+
+        return submissionRepository.save(submission);
+    }
+
+    // Resubmit after changes requested
+    public Submission resubmit(
+            Long previousSubmissionId,
+            Submission newSubmission
+    ) {
+
+        Submission previousSubmission =
+                submissionRepository.findById(previousSubmissionId)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Previous submission not found: "
+                                                + previousSubmissionId
+                                ));
+
+        if (previousSubmission.getStatus()
+                != SubmissionStatus.CHANGES_REQUESTED) {
+
+            throw new RuntimeException(
+                    "Only submissions with requested changes can be resubmitted"
+            );
+        }
+
+        newSubmission.setTask(previousSubmission.getTask());
+        newSubmission.setSubmittedBy(previousSubmission.getSubmittedBy());
+        newSubmission.setPreviousSubmission(previousSubmission);
+        newSubmission.setStatus(SubmissionStatus.SUBMITTED);
+
+        return submissionRepository.save(newSubmission);
     }
 }

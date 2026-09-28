@@ -38,6 +38,10 @@ public class Submission {
     @Column(nullable = false)
     private LocalDateTime submittedAt;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "previous_submission_id")
+    private Submission previousSubmission;
+
     public Submission() {
     }
 
@@ -115,5 +119,13 @@ public class Submission {
 
     public void setSubmittedAt(LocalDateTime submittedAt) {
         this.submittedAt = submittedAt;
+    }
+
+    public Submission getPreviousSubmission() {
+        return previousSubmission;
+    }
+
+    public void setPreviousSubmission(Submission previousSubmission) {
+        this.previousSubmission = previousSubmission;
     }
 }

@@ -91,4 +91,38 @@ public class SubmissionController {
                         status)
         );
     }
+ // Approve submission
+    @PatchMapping("/{id}/approve")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public ResponseEntity<Submission> approveSubmission(
+            @PathVariable Long id
+    ) {
+        return ResponseEntity.ok(
+                submissionService.approveSubmission(id)
+        );
+    }
+
+    // Request changes for submission
+    @PatchMapping("/{id}/request-changes")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public ResponseEntity<Submission> requestChanges(
+            @PathVariable Long id
+    ) {
+        return ResponseEntity.ok(
+                submissionService.requestChanges(id)
+        );
+    }
+
+    @PostMapping("/{id}/resubmit")
+    @PreAuthorize("hasRole('EMPLOYEE')")
+    public ResponseEntity<Submission> resubmit(
+            @PathVariable Long id,
+            @RequestBody Submission submission
+    ) {
+        return ResponseEntity.ok(
+                submissionService.resubmit(id, submission)
+        );
+    }
+
+
 }

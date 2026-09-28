@@ -1,6 +1,6 @@
 package com.Workmanagement.task.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -30,6 +30,6 @@ public class TaskRequirement {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "task_id", nullable = false)
-    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "project", "assignedTo"})
+    @JsonBackReference
     private Task task;
 }

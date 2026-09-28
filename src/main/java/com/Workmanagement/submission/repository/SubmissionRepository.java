@@ -14,4 +14,6 @@ public interface SubmissionRepository
     List<Submission> findBySubmittedById(Long employeeId);
 
     List<Submission> findByStatus(SubmissionStatus status);
+
+    List<Submission> findByTaskIdOrderBySubmittedAtDesc(Long taskId);
 }
