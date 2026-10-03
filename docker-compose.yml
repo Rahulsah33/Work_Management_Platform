@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: work-management-mysql
+    restart: unless-stopped
+    ports:
+      - "${DB_PORT:-3306}:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: ${DB_NAME:-work_management}
+      MYSQL_USER: ${DB_USERNAME:-workuser}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-workpassword}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-rootpassword}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - work-management-net
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: work-management-api
+    restart: unless-stopped
+    ports:
+      - "${SERVER_PORT:-8080}:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      SERVER_PORT: 8080
+      DB_URL: jdbc:mysql://mysql:3306/${DB_NAME:-work_management}?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      DB_USERNAME: ${DB_USERNAME:-workuser}
+      DB_PASSWORD: ${DB_PASSWORD:-workpassword}
+      JWT_SECRET: ${JWT_SECRET:-MySuperSecretKeyForWorkManagement2026DefaultKey32Bytes}
+      JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS:-3600000}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      SWAGGER_ENABLED: ${SWAGGER_ENABLED:-true}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 25s
+    networks:
+      - work-management-net
+
+volumes:
+  mysql_data:
+    driver: local
+
+networks:
+  work-management-net:
+    driver: bridge

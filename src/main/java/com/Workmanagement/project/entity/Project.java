@@ -15,7 +15,14 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @Entity
-@Table(name = "projects")
+@Table(
+        name = "projects",
+        indexes = {
+                @Index(name = "idx_projects_manager_id", columnList = "manager_id"),
+                @Index(name = "idx_projects_status", columnList = "status"),
+                @Index(name = "idx_projects_created_at", columnList = "createdAt")
+        }
+)
 public class Project {
 
     @Id
@@ -57,6 +64,7 @@ public class Project {
         this.createdAt = LocalDateTime.now();
     }
 
+    @PrePersist
     protected void onCreate() {
         if (createdAt == null) {
             createdAt = LocalDateTime.now();

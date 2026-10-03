@@ -1,6 +1,9 @@
 package com.Workmanagement.ai.service;
 
 import com.Workmanagement.ai.model.AiRiskResult;
+import com.Workmanagement.auth.security.AuthorizationService;
+import com.Workmanagement.auth.security.CurrentUserService;
+import com.Workmanagement.common.exception.ResourceNotFoundException;
 import com.Workmanagement.task.entity.Task;
 import com.Workmanagement.task.repository.TaskRepository;
 import org.springframework.ai.chat.client.ChatClient;
@@ -14,20 +17,29 @@ public class AiRiskService {
 
     private final ChatClient chatClient;
     private final TaskRepository taskRepository;
+    private final CurrentUserService currentUserService;
+    private final AuthorizationService authorizationService;
 
     public AiRiskService(
             ChatClient.Builder chatClientBuilder,
-            TaskRepository taskRepository
+            TaskRepository taskRepository,
+            CurrentUserService currentUserService,
+            AuthorizationService authorizationService
     ) {
         this.chatClient = chatClientBuilder.build();
         this.taskRepository = taskRepository;
+        this.currentUserService = currentUserService;
+        this.authorizationService = authorizationService;
     }
 
     public AiRiskResult analyzeRisk(Long taskId) {
 
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() ->
-                        new RuntimeException("Task not found: " + taskId));
+                        new ResourceNotFoundException("Task not found with id: " + taskId));
+
+        currentUserService.getCurrentUserOptional().ifPresent(user ->
+                authorizationService.checkAccessTask(task, user));
 
         long daysRemaining = ChronoUnit.DAYS.between(
                 LocalDate.now(),

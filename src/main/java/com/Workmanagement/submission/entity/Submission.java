@@ -2,12 +2,21 @@ package com.Workmanagement.submission.entity;
 
 import com.Workmanagement.task.entity.Task;
 import com.Workmanagement.user.entity.User;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "submissions")
+@Table(
+        name = "submissions",
+        indexes = {
+                @Index(name = "idx_submissions_task_id", columnList = "task_id"),
+                @Index(name = "idx_submissions_submitted_by", columnList = "submitted_by"),
+                @Index(name = "idx_submissions_status", columnList = "status"),
+                @Index(name = "idx_submissions_submitted_at", columnList = "submittedAt")
+        }
+)
 public class Submission {
 
     @Id
@@ -27,19 +36,28 @@ public class Submission {
     @Column(nullable = false)
     private SubmissionStatus status;
 
+    @Column(nullable = false)
+    private Integer version = 1;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "task_id", nullable = false)
+    @JsonIgnoreProperties({"submissions", "requirements", "hibernateLazyInitializer", "handler"})
     private Task task;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "submitted_by", nullable = false)
+    @JsonIgnoreProperties({"password", "hibernateLazyInitializer", "handler"})
     private User submittedBy;
 
     @Column(nullable = false)
     private LocalDateTime submittedAt;
 
+    @Column(length = 5000)
+    private String managerFeedback;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "previous_submission_id")
+    @JsonIgnoreProperties({"previousSubmission", "task", "hibernateLazyInitializer", "handler"})
     private Submission previousSubmission;
 
     public Submission() {
@@ -47,13 +65,16 @@ public class Submission {
 
     @PrePersist
     protected void onCreate() {
-
         if (submittedAt == null) {
             submittedAt = LocalDateTime.now();
         }
 
         if (status == null) {
             status = SubmissionStatus.SUBMITTED;
+        }
+
+        if (version == null) {
+            version = 1;
         }
     }
 
@@ -121,11 +142,27 @@ public class Submission {
         this.submittedAt = submittedAt;
     }
 
+    public String getManagerFeedback() {
+        return managerFeedback;
+    }
+
+    public void setManagerFeedback(String managerFeedback) {
+        this.managerFeedback = managerFeedback;
+    }
+
     public Submission getPreviousSubmission() {
         return previousSubmission;
     }
 
     public void setPreviousSubmission(Submission previousSubmission) {
         this.previousSubmission = previousSubmission;
+    }
+
+    public Integer getVersion() {
+        return version;
+    }
+
+    public void setVersion(Integer version) {
+        this.version = version;
     }
 }

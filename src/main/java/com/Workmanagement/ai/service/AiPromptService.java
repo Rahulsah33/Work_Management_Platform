@@ -1,11 +1,15 @@
 package com.Workmanagement.ai.service;
 
 import com.Workmanagement.ai.model.AiEvaluationResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.stereotype.Service;
 
 @Service
 public class AiPromptService {
+
+    private static final Logger log = LoggerFactory.getLogger(AiPromptService.class);
 
     private final ChatClient chatClient;
     private final RequirementScoreCalculator scoreCalculator;
@@ -99,48 +103,13 @@ public class AiPromptService {
         );
 
         try {
-
-            System.out.println("========================================");
-            System.out.println("STARTING AI EVALUATION");
-            System.out.println("========================================");
-
-            System.out.println("Task Description:");
-            System.out.println(taskDescription);
-
-            System.out.println("\nRequirements:");
-            System.out.println(requirements);
-
-            System.out.println("\nEmployee Report:");
-            System.out.println(employeeReport);
-
-            System.out.println("\nCalling Gemini...");
+            log.info("Starting AI evaluation for task submission");
 
             AiEvaluationResult result = chatClient
                     .prompt()
                     .user(prompt)
                     .call()
                     .entity(AiEvaluationResult.class);
-
-            System.out.println("\nGemini response converted successfully.");
-
-            System.out.println(
-                    "Completion: " + result.getCompletionPercentage()
-            );
-
-            System.out.println(
-                    "Quality: " + result.getQualityScore()
-            );
-
-            System.out.println(
-                    "Confidence: " + result.getConfidenceScore()
-            );
-
-            System.out.println(
-                    "Requirements returned: " +
-                            (result.getRequirements() == null
-                                    ? "NULL"
-                                    : result.getRequirements().size())
-            );
 
             validator.validate(result);
 
@@ -151,39 +120,11 @@ public class AiPromptService {
 
             result.setCompletionPercentage(calculatedPercentage);
 
-            System.out.println(
-                    "Calculated completion: " +
-                            calculatedPercentage
-            );
-
-            System.out.println("========================================");
-            System.out.println("AI EVALUATION SUCCESS");
-            System.out.println("========================================");
-
+            log.info("AI evaluation completed successfully: completion={}%", calculatedPercentage);
             return result;
 
         } catch (Exception e) {
-
-            System.err.println("========================================");
-            System.err.println("AI EVALUATION FAILED");
-            System.err.println("========================================");
-
-            System.err.println(
-                    "Exception Type: " +
-                            e.getClass().getName()
-            );
-
-            System.err.println(
-                    "Exception Message: " +
-                            e.getMessage()
-            );
-
-            System.err.println("\nFull Stack Trace:");
-
-            e.printStackTrace();
-
-            System.err.println("========================================");
-
+            log.error("AI evaluation failed: {}", e.getMessage(), e);
             throw e;
         }
     }

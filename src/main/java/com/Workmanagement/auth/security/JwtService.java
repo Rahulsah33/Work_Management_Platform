@@ -2,6 +2,7 @@ package com.Workmanagement.auth.security;
 
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
@@ -11,17 +12,21 @@ import java.util.Date;
 @Service
 public class JwtService {
 
-    private static final String SECRET = "MySuperSecretKeyForWorkManagement2026";
+    private final SecretKey secretKey;
+    private final long expirationTime;
 
-    private static final long EXPIRATION_TIME = 1000 * 60 * 60; // 1 hour in milliseconds
-
-    private final SecretKey secretKey = Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8));
+    public JwtService(
+            @Value("${jwt.secret:MySuperSecretKeyForWorkManagement2026DefaultKey32Bytes}") String secret,
+            @Value("${jwt.expiration-ms:3600000}") long expirationTime) {
+        this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+        this.expirationTime = expirationTime;
+    }
 
     public String generateToken(String email) {
         return Jwts.builder()
                 .subject(email)
                 .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
+                .expiration(new Date(System.currentTimeMillis() + expirationTime))
                 .signWith(secretKey)
                 .compact();
     }

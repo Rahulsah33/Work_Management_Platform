@@ -16,4 +16,10 @@ public interface SubmissionRepository
     List<Submission> findByStatus(SubmissionStatus status);
 
     List<Submission> findByTaskIdOrderBySubmittedAtDesc(Long taskId);
+
+    List<Submission> findByTaskIdOrderByVersionDesc(Long taskId);
+
+    List<Submission> findByTaskIdOrderByVersionAsc(Long taskId);
+
+    java.util.Optional<Submission> findFirstByTaskIdOrderByVersionDesc(Long taskId);
 }

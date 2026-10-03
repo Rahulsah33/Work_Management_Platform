@@ -3,12 +3,18 @@ package com.Workmanagement.ai.controller;
 import com.Workmanagement.ai.entity.AiEvaluation;
 import com.Workmanagement.ai.entity.AiEvaluationStatus;
 import com.Workmanagement.ai.service.AiEvaluationService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Tag(name = "AI Evaluation", description = "Endpoints for automated and manual AI evaluations of submissions against task requirements")
 @RestController
 @RequestMapping("/api/ai/evaluations")
 public class AiEvaluationController {
@@ -21,11 +27,15 @@ public class AiEvaluationController {
         this.evaluationService = evaluationService;
     }
 
-    // Create manual evaluation
+    @Operation(summary = "Create manual evaluation", description = "Creates an evaluation record manually for a submission. Requires ADMIN or project MANAGER ownership.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Evaluation created successfully"),
+            @ApiResponse(responseCode = "403", description = "Forbidden if manager does not own the project")
+    })
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ResponseEntity<AiEvaluation> createEvaluation(
-            @RequestParam Long submissionId,
+            @Parameter(description = "Submission ID", required = true) @RequestParam Long submissionId,
             @RequestBody AiEvaluation evaluation) {
 
         return ResponseEntity.ok(
@@ -36,31 +46,35 @@ public class AiEvaluationController {
         );
     }
 
-    // AI evaluation
+    @Operation(summary = "Trigger automated AI evaluation", description = "Evaluates a submission against its task requirements using Google GenAI / Gemini, computing completion percentage, quality score, and feedback.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "AI evaluation completed and stored"),
+            @ApiResponse(responseCode = "403", description = "Forbidden if manager does not own the project")
+    })
     @PostMapping("/evaluate/{submissionId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ResponseEntity<AiEvaluation> evaluateSubmission(
-            @PathVariable Long submissionId) {
+            @Parameter(description = "Submission ID", required = true) @PathVariable Long submissionId) {
 
         return ResponseEntity.ok(
                 evaluationService.evaluateSubmission(submissionId)
         );
     }
 
-    // Get evaluation by ID
+    @Operation(summary = "Get evaluation by ID", description = "Retrieves an AI evaluation by its ID. Enforces submission and task ownership access.")
     @GetMapping("/{id}")
     public ResponseEntity<AiEvaluation> getEvaluationById(
-            @PathVariable Long id) {
+            @Parameter(description = "Evaluation ID", required = true) @PathVariable Long id) {
 
         return ResponseEntity.ok(
                 evaluationService.getEvaluationById(id)
         );
     }
 
-    // Get evaluation for submission
+    @Operation(summary = "Get evaluation for submission", description = "Retrieves the AI evaluation associated with a submission.")
     @GetMapping("/submission/{submissionId}")
     public ResponseEntity<AiEvaluation> getBySubmission(
-            @PathVariable Long submissionId) {
+            @Parameter(description = "Submission ID", required = true) @PathVariable Long submissionId) {
 
         return ResponseEntity.ok(
                 evaluationService.getEvaluationsBySubmission(
@@ -69,22 +83,22 @@ public class AiEvaluationController {
         );
     }
 
-    // Get evaluations by status
+    @Operation(summary = "Get evaluations by status", description = "Retrieves all evaluations filtered by status (PENDING, COMPLETED, FAILED). Requires ADMIN or MANAGER role.")
     @GetMapping("/status/{status}")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ResponseEntity<List<AiEvaluation>> getByStatus(
-            @PathVariable AiEvaluationStatus status) {
+            @Parameter(description = "AI evaluation status", required = true) @PathVariable AiEvaluationStatus status) {
 
         return ResponseEntity.ok(
                 evaluationService.getEvaluationsByStatus(status)
         );
     }
 
-    // Update evaluation
+    @Operation(summary = "Update evaluation", description = "Updates an existing evaluation record. Requires project manager ownership or admin.")
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ResponseEntity<AiEvaluation> updateEvaluation(
-            @PathVariable Long id,
+            @Parameter(description = "Evaluation ID", required = true) @PathVariable Long id,
             @RequestBody AiEvaluation evaluation) {
 
         return ResponseEntity.ok(

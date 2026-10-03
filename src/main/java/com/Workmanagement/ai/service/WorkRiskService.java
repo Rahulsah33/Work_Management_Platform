@@ -1,6 +1,9 @@
 package com.Workmanagement.ai.service;
 
 import com.Workmanagement.ai.entity.WorkRisk;
+import com.Workmanagement.auth.security.AuthorizationService;
+import com.Workmanagement.auth.security.CurrentUserService;
+import com.Workmanagement.common.exception.ResourceNotFoundException;
 import com.Workmanagement.task.entity.Task;
 import com.Workmanagement.task.entity.TaskStatus;
 import com.Workmanagement.task.repository.TaskRepository;
@@ -13,16 +16,26 @@ import java.time.temporal.ChronoUnit;
 public class WorkRiskService {
 
     private final TaskRepository taskRepository;
+    private final CurrentUserService currentUserService;
+    private final AuthorizationService authorizationService;
 
-    public WorkRiskService(TaskRepository taskRepository) {
+    public WorkRiskService(
+            TaskRepository taskRepository,
+            CurrentUserService currentUserService,
+            AuthorizationService authorizationService) {
         this.taskRepository = taskRepository;
+        this.currentUserService = currentUserService;
+        this.authorizationService = authorizationService;
     }
 
     public WorkRisk analyzeTaskRisk(Long taskId) {
 
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() ->
-                        new RuntimeException("Task not found: " + taskId));
+                        new ResourceNotFoundException("Task not found with id: " + taskId));
+
+        currentUserService.getCurrentUserOptional().ifPresent(user ->
+                authorizationService.checkAccessTask(task, user));
 
         LocalDate today = LocalDate.now();
 

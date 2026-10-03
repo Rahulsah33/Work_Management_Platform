@@ -1,0 +1,16 @@
+target/
+.git
+.idea
+.vscode
+*.iml
+*.ipr
+*.iws
+.env
+.env.*
+!.env.example
+frontend/node_modules/
+frontend/dist/
+frontend/.next/
+HELP.md
+*.ps1
+*.log
