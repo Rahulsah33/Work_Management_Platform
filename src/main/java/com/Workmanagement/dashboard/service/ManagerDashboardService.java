@@ -65,21 +65,28 @@ public class ManagerDashboardService {
         User currentUser = currentUserService.getCurrentUser();
 
         // -------------------------------------------------
-        // PROJECTS (Show all projects like admin)
+        // Managers only see projects they own; admins retain global visibility.
         // -------------------------------------------------
 
-        List<Project> projects = projectRepository.findAll();
-
-        Set<Long> projectIds = projects.stream()
-                .map(Project::getId)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toSet());
+        boolean isAdmin = currentUser.getRole() == Role.ADMIN;
+        List<Project> projects = isAdmin
+                ? projectRepository.findAll()
+                : projectRepository.findByManagerId(currentUser.getId());
 
         // -------------------------------------------------
         // TASKS
         // -------------------------------------------------
 
-        List<Task> tasks = taskRepository.findAll();
+        Set<Long> ownedProjectIds = projects.stream()
+                .map(Project::getId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        List<Task> tasks = isAdmin
+                ? taskRepository.findAll()
+                : taskRepository.findAll().stream()
+                .filter(task -> task.getProject() != null
+                        && ownedProjectIds.contains(task.getProject().getId()))
+                .toList();
 
         Set<Long> taskIds = tasks.stream()
                 .map(Task::getId)
@@ -90,7 +97,12 @@ public class ManagerDashboardService {
         // SUBMISSIONS
         // -------------------------------------------------
 
-        List<Submission> submissions = submissionRepository.findAll();
+        List<Submission> submissions = isAdmin
+                ? submissionRepository.findAll()
+                : submissionRepository.findAll().stream()
+                .filter(submission -> submission.getTask() != null
+                        && taskIds.contains(submission.getTask().getId()))
+                .toList();
 
         Set<Long> submissionIds = submissions.stream()
                 .map(Submission::getId)
@@ -106,6 +118,9 @@ public class ManagerDashboardService {
                 .filter(evaluation ->
                         evaluation.getStatus() == AiEvaluationStatus.COMPLETED
                 )
+                .filter(evaluation -> isAdmin
+                        || (evaluation.getSubmission() != null
+                        && submissionIds.contains(evaluation.getSubmission().getId())))
                 .toList();
 
         LocalDate today = LocalDate.now();
@@ -127,8 +142,6 @@ public class ManagerDashboardService {
                         .collect(Collectors.groupingBy(
                                 task -> task.getProject().getId()
                         ));
-
-        boolean isAdmin = currentUser.getRole() == Role.ADMIN;
 
         List<EmployeeWorkload> employeeWorkloads =
                 buildEmployeeWorkloads(tasks, today, isAdmin);

@@ -1,5 +1,6 @@
 package com.Workmanagement.security;
 
+import com.Workmanagement.ai.repository.AiEvaluationRepository;
 import com.Workmanagement.ai.tools.ProjectTools;
 import com.Workmanagement.ai.tools.SubmissionTools;
 import com.Workmanagement.ai.tools.TaskTools;
@@ -67,6 +68,9 @@ public class SecurityHardeningTest {
 
     @Mock
     private SubmissionRepository submissionRepository;
+
+    @Mock
+    private AiEvaluationRepository aiEvaluationRepository;
 
     @Mock
     private NotificationRepository notificationRepository;
@@ -164,7 +168,7 @@ public class SecurityHardeningTest {
     @DisplayName("Employee can access own tasks via getMyTasks and cannot access another employee's tasks")
     void testEmployeeTaskIsolation() {
         authenticateAs(employee1);
-        TaskService taskService = new TaskService(taskRepository, projectRepository, userRepository, notificationService, auditLogService, currentUserService, authorizationService);
+        TaskService taskService = new TaskService(taskRepository, projectRepository, userRepository, notificationService, auditLogService, currentUserService, authorizationService, submissionRepository, aiEvaluationRepository, commentRepository, requirementRepository);
 
         when(taskRepository.findByAssignedTo(employee1)).thenReturn(List.of(taskA));
         List<Task> myTasks = taskService.getMyTasks();
@@ -183,7 +187,7 @@ public class SecurityHardeningTest {
     @DisplayName("Employee cannot directly set task status to COMPLETED or APPROVED")
     void testEmployeeStatusChangeForbidden() {
         authenticateAs(employee1);
-        TaskService taskService = new TaskService(taskRepository, projectRepository, userRepository, notificationService, auditLogService, currentUserService, authorizationService);
+        TaskService taskService = new TaskService(taskRepository, projectRepository, userRepository, notificationService, auditLogService, currentUserService, authorizationService, submissionRepository, aiEvaluationRepository, commentRepository, requirementRepository);
 
         when(taskRepository.findById(taskA.getId())).thenReturn(Optional.of(taskA));
 
@@ -271,8 +275,8 @@ public class SecurityHardeningTest {
     @DisplayName("Manager A cannot modify, delete, or create tasks in Manager B's projects")
     void testManagerProjectIsolation() {
         authenticateAs(managerA);
-        ProjectService projectService = new ProjectService(projectRepository, userRepository, auditLogService, currentUserService, authorizationService);
-        TaskService taskService = new TaskService(taskRepository, projectRepository, userRepository, notificationService, auditLogService, currentUserService, authorizationService);
+        ProjectService projectService = new ProjectService(projectRepository, userRepository, auditLogService, currentUserService, authorizationService, taskRepository, submissionRepository, aiEvaluationRepository, commentRepository, requirementRepository);
+        TaskService taskService = new TaskService(taskRepository, projectRepository, userRepository, notificationService, auditLogService, currentUserService, authorizationService, submissionRepository, aiEvaluationRepository, commentRepository, requirementRepository);
 
         when(projectRepository.findById(projectB.getId())).thenReturn(Optional.of(projectB));
 
@@ -365,8 +369,8 @@ public class SecurityHardeningTest {
     void testAdminGlobalAccess() {
         authenticateAs(admin);
 
-        ProjectService projectService = new ProjectService(projectRepository, userRepository, auditLogService, currentUserService, authorizationService);
-        TaskService taskService = new TaskService(taskRepository, projectRepository, userRepository, notificationService, auditLogService, currentUserService, authorizationService);
+        ProjectService projectService = new ProjectService(projectRepository, userRepository, auditLogService, currentUserService, authorizationService, taskRepository, submissionRepository, aiEvaluationRepository, commentRepository, requirementRepository);
+        TaskService taskService = new TaskService(taskRepository, projectRepository, userRepository, notificationService, auditLogService, currentUserService, authorizationService, submissionRepository, aiEvaluationRepository, commentRepository, requirementRepository);
         SubmissionService submissionService = new SubmissionService(submissionRepository, taskRepository, userRepository, notificationService, auditLogService, currentUserService, authorizationService);
 
         when(projectRepository.findById(projectB.getId())).thenReturn(Optional.of(projectB));

@@ -13,8 +13,10 @@ public class AuthorizationService {
 
     public boolean canManageProject(Project project, User user) {
         if (user == null || project == null) return false;
-        if (user.getRole() == Role.ADMIN || user.getRole() == Role.MANAGER) return true;
-        return false;
+        if (user.getRole() == Role.ADMIN) return true;
+        return user.getRole() == Role.MANAGER
+                && project.getManager() != null
+                && sameUser(project.getManager(), user);
     }
 
     public void checkManageProject(Project project, User user) {
@@ -25,8 +27,9 @@ public class AuthorizationService {
 
     public boolean canAccessProject(Project project, User user) {
         if (user == null || project == null) return false;
-        if (user.getRole() == Role.ADMIN || user.getRole() == Role.MANAGER || user.getRole() == Role.EMPLOYEE) return true;
-        return false;
+        if (user.getRole() == Role.ADMIN) return true;
+        if (user.getRole() == Role.MANAGER) return canManageProject(project, user);
+        return user.getRole() == Role.EMPLOYEE;
     }
 
     public void checkAccessProject(Project project, User user) {
@@ -39,7 +42,7 @@ public class AuthorizationService {
         if (user == null || task == null) return false;
         if (user.getRole() == Role.ADMIN) return true;
         if (user.getRole() == Role.MANAGER) {
-            return task.getProject() == null || canManageProject(task.getProject(), user);
+            return task.getProject() != null && canManageProject(task.getProject(), user);
         }
         return false;
     }
@@ -54,7 +57,7 @@ public class AuthorizationService {
         if (user == null || task == null) return false;
         if (user.getRole() == Role.ADMIN) return true;
         if (user.getRole() == Role.MANAGER) {
-            return task.getProject() == null || canManageProject(task.getProject(), user);
+            return task.getProject() != null && canManageProject(task.getProject(), user);
         }
         if (user.getRole() == Role.EMPLOYEE) {
             return task.getAssignedTo() != null && user.getId().equals(task.getAssignedTo().getId());
@@ -100,5 +103,14 @@ public class AuthorizationService {
         if (!canAccessSubmission(submission, user)) {
             throw new AccessDeniedException("You are not authorized to access this submission");
         }
+    }
+
+    private boolean sameUser(User first, User second) {
+        if (first.getId() != null && second.getId() != null) {
+            return first.getId().equals(second.getId());
+        }
+        return first.getEmail() != null
+                && second.getEmail() != null
+                && first.getEmail().equalsIgnoreCase(second.getEmail());
     }
 }

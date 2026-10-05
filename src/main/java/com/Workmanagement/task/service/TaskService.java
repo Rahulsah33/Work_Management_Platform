@@ -121,11 +121,17 @@ public class TaskService {
         return task;
     }
 
-    // Get all tasks across authorized scope (Global for ADMIN and MANAGER)
+    // Get all tasks across the current user's authorized scope
     public List<Task> getAllTasks() {
         User currentUser = currentUserService.getCurrentUser();
-        if (currentUser.getRole() == Role.ADMIN || currentUser.getRole() == Role.MANAGER) {
+        if (currentUser.getRole() == Role.ADMIN) {
             return taskRepository.findAll();
+        }
+        if (currentUser.getRole() == Role.MANAGER) {
+            return taskRepository.findAll().stream()
+                    .filter(task -> task.getProject() != null
+                            && authorizationService.canManageProject(task.getProject(), currentUser))
+                    .toList();
         }
         return taskRepository.findByAssignedTo(currentUser);
     }
@@ -207,6 +213,7 @@ public class TaskService {
         if (updatedTask.getProject() != null && updatedTask.getProject().getId() != null) {
             Project newProject = projectRepository.findById(updatedTask.getProject().getId())
                     .orElse(existingTask.getProject());
+            authorizationService.checkManageProject(newProject, currentUser);
             existingTask.setProject(newProject);
         }
 

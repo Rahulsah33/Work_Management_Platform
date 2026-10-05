@@ -1,5 +1,6 @@
 package com.Workmanagement.audit;
 
+import com.Workmanagement.ai.repository.AiEvaluationRepository;
 import com.Workmanagement.audit.entity.AuditAction;
 import com.Workmanagement.audit.model.AuditLogResponse;
 import com.Workmanagement.audit.service.AuditLogService;
@@ -72,6 +73,9 @@ public class AuditLogWorkflowIntegrationTest {
     private SubmissionRepository submissionRepository;
 
     @Mock
+    private AiEvaluationRepository aiEvaluationRepository;
+
+    @Mock
     private NotificationRepository notificationRepository;
 
     @Mock
@@ -108,7 +112,7 @@ public class AuditLogWorkflowIntegrationTest {
         authenticateAs(manager);
         when(userRepository.findByEmail("manager@test.com")).thenReturn(Optional.of(manager));
 
-        ProjectService projectService = new ProjectService(projectRepository, userRepository, auditLogService, currentUserService, authorizationService);
+        ProjectService projectService = new ProjectService(projectRepository, userRepository, auditLogService, currentUserService, authorizationService, taskRepository, submissionRepository, aiEvaluationRepository, commentRepository, requirementRepository);
 
         Project project = new Project();
         project.setId(10L);
@@ -140,7 +144,7 @@ public class AuditLogWorkflowIntegrationTest {
         when(userRepository.findByEmail("manager@test.com")).thenReturn(Optional.of(manager));
 
         NotificationService notificationService = mock(NotificationService.class);
-        TaskService taskService = new TaskService(taskRepository, projectRepository, userRepository, notificationService, auditLogService, currentUserService, authorizationService);
+        TaskService taskService = new TaskService(taskRepository, projectRepository, userRepository, notificationService, auditLogService, currentUserService, authorizationService, submissionRepository, aiEvaluationRepository, commentRepository, requirementRepository);
 
         Project project = new Project();
         project.setId(10L);

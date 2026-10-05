@@ -38,8 +38,7 @@ public class AiRiskService {
                 .orElseThrow(() ->
                         new ResourceNotFoundException("Task not found with id: " + taskId));
 
-        currentUserService.getCurrentUserOptional().ifPresent(user ->
-                authorizationService.checkAccessTask(task, user));
+        authorizationService.checkAccessTask(task, currentUserService.getCurrentUser());
 
         long daysRemaining = ChronoUnit.DAYS.between(
                 LocalDate.now(),
